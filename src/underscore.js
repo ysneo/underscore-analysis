@@ -70,8 +70,11 @@
   // Internal function that returns an efficient (for current engines) version
   // of the passed-in callback, to be repeatedly applied in other Underscore
   // functions.
-  // 内部方法
+  // underscore 中内部方法：返回一个快速的回调函数
+  // func 用户定义的回调函数
+  // context this 指向
   var optimizeCb = function(func, context, argCount) {
+    // 没有设置this指向，直接返回用户回调。 void 0 === undefined （避免undefined被重新定义，压缩代码，逼格高）
     if (context === void 0) return func
     switch (argCount == null ? 3 : argCount) {
       case 1:
@@ -84,6 +87,7 @@
         }
       case 3:
         return function(value, index, collection) {
+          // 改变this指向，返回新的回调函数
           return func.call(context, value, index, collection)
         }
       case 4:
@@ -99,6 +103,7 @@
   // A mostly-internal function to generate callbacks that can be applied
   // to each element in a collection, returning the desired result — either
   // identity, an arbitrary callback, a property matcher, or a property accessor.
+  // 识别哪个方法去处理相应的回调
   var cb = function(value, context, argCount) {
     if (value == null) return _.identity
     if (_.isFunction(value)) return optimizeCb(value, context, argCount)
@@ -110,16 +115,38 @@
   }
 
   // An internal function for creating assigner functions.
+  // 有三个方法用到了这个内部函数
+  // _.extend & _.extendOwn & _.defaults
+  // _.extend = createAssigner(_.allKeys);
+  // _.extendOwn = _.assign = createAssigner(_.keys);
+  // _.defaults = createAssigner(_.allKeys, true);
   var createAssigner = function(keysFunc, undefinedOnly) {
+    // 返回函数
     return function(obj) {
+      // obj 只指传入所有参数的第一个， 更多的用arguments表示
       var length = arguments.length
+      // 参数值0～1个 或者 null undefined， 直接返回该参数
       if (length < 2 || obj == null) return obj
+      // 枚举各个参数
       for (var index = 1; index < length; index++) {
+        // source 对应index的参数对象
         var source = arguments[index],
+          // 获取对象参数的属性
           keys = keysFunc(source),
+          // 对象keys的长度
           l = keys.length
+        // 遍历该对象的所有属性
         for (var i = 0; i < l; i++) {
+          // 具体key值
           var key = keys[i]
+          // 第一种情况: 允许覆盖已有的
+          // _.extend 和 _.extendOwn 没有传undefinedOnly
+          // 故 !undefinedOnly 为 true， 执行条件。 这里的obj就是第一个参数对象
+          // 后面对象的属性值覆盖第一个参数对象的属性值。
+          // ================
+          // 第二种情况: 不允许覆盖已有的
+          // _.defaults ！undefinedOnly 为false ,
+          // 则判断第一个对象中有该属性吗？没有则添加。
           if (!undefinedOnly || obj[key] === void 0) obj[key] = source[key]
         }
       }
@@ -128,17 +155,24 @@
   }
 
   // An internal function for creating a new object that inherits from another.
+  // 创建继承自另一个对象原型的新对象
   var baseCreate = function(prototype) {
+    // prototype 是对象吗？
     if (!_.isObject(prototype)) return {}
+    // 原生 ES5
     if (nativeCreate) return nativeCreate(prototype)
+    // Ctor 空的 constructor
+    // 原型赋值
     Ctor.prototype = prototype
     var result = new Ctor()
-    Ctor.prototype = null
-    return result
+    Ctor.prototype = null // 清除以便下次重用
+    return result // 新的对象已继承参数prototype
   }
 
+  // 闭包
   var property = function(key) {
     return function(obj) {
+      // 返回对象的属性值
       return obj == null ? void 0 : obj[key]
     }
   }
@@ -148,8 +182,10 @@
   // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
   // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1
-  var getLength = property('length')
+  var getLength = property('length') // 闭包
+  // 是不是类数组类型
   var isArrayLike = function(collection) {
+    // 获取长度 array 返回数字 否则返回 undefined
     var length = getLength(collection)
     return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX
   }
@@ -160,16 +196,25 @@
   // The cornerstone, an `each` implementation, aka `forEach`.
   // Handles raw objects in addition to array-likes. Treats all
   // sparse array-likes as if they were dense.
+  // obj 数组、类数组、对象
+  // iteratee 迭代方法 回调 （item, index, array） 或者 (value, key, object)
+  // context 确定 iteratee 中 this 指向，可省略
   _.each = _.forEach = function(obj, iteratee, context) {
     iteratee = optimizeCb(iteratee, context)
     var i, length
     if (isArrayLike(obj)) {
+      // 如果是数组
       for (i = 0, length = obj.length; i < length; i++) {
+        // 出发迭代方法（item, index, array）
         iteratee(obj[i], i, obj)
       }
     } else {
+      // 如果是对象
+      // 获取所有键
       var keys = _.keys(obj)
+      // 遍历 键
       for (i = 0, length = keys.length; i < length; i++) {
+        // 回调参数(属性值， 键， 该对象) / (value, key, obj)
         iteratee(obj[keys[i]], keys[i], obj)
       }
     }
@@ -179,17 +224,22 @@
   // Return the results of applying the iteratee to each element.
   _.map = _.collect = function(obj, iteratee, context) {
     iteratee = cb(iteratee, context)
-    var keys = !isArrayLike(obj) && _.keys(obj), // 是 Object 则输出所有属性，否则 undefined
+    // 是 Object 则输出所有属性，否则 undefined
+    var keys = !isArrayLike(obj) && _.keys(obj),
       length = (keys || obj).length, // 获取长度
-      results = Array(length) // 创建一个 length 的空数组
+      results = Array(length) // 创建一个长度为length的新空数组
+    // 遍历
     for (var index = 0; index < length; index++) {
+      // currentKey keys == true ? 获取对象属性值 : 数组序号
       var currentKey = keys ? keys[index] : index
+      // 出发迭代方法
       results[index] = iteratee(obj[currentKey], currentKey, obj)
     }
     return results
   }
 
   // Create a reducing function iterating left or right.
+  // dir 方向
   function createReduce(dir) {
     // Optimized iterator function as using arguments.length
     // in the main function will deoptimize the, see #1991.
