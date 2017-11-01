@@ -51,6 +51,9 @@
   // Export the Underscore object for **Node.js**, with
   // backwards-compatibility for the old `require()` API. If we're in
   // the browser, add `_` as a global object.
+  // 在 nodejs 中导出 underscore 对象，
+  // 向后兼容旧的require()
+  // 浏览器中 注册 `_` 为全局对象
   if (typeof exports !== 'undefined') {
     if (typeof module !== 'undefined' && module.exports) {
       exports = module.exports = _
@@ -61,11 +64,13 @@
   }
 
   // Current version.
+  // 版本号
   _.VERSION = '1.8.3'
 
   // Internal function that returns an efficient (for current engines) version
   // of the passed-in callback, to be repeatedly applied in other Underscore
   // functions.
+  // 内部方法
   var optimizeCb = function(func, context, argCount) {
     if (context === void 0) return func
     switch (argCount == null ? 3 : argCount) {
