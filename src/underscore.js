@@ -5,20 +5,26 @@
 
 ;(function() {
   // Baseline setup
+  // 基本设置
   // --------------
 
   // Establish the root object, `window` in the browser, or `exports` on the server.
+  // 建立环境变量 浏览器中是 windows 或者 服务端是 exports
   var root = this
 
   // Save the previous value of the `_` variable.
+  // 保存先前的变量值 `_`
   var previousUnderscore = root._
 
   // Save bytes in the minified (but not gzipped) version:
+  // 为了最大化压缩， 定义简写变量
   var ArrayProto = Array.prototype,
     ObjProto = Object.prototype,
     FuncProto = Function.prototype
 
   // Create quick reference variables for speed access to core prototypes.
+  // 代码压缩
+  // 提高效率 避免对原型链的查找次数
   var push = ArrayProto.push,
     slice = ArrayProto.slice,
     toString = ObjProto.toString,
@@ -26,6 +32,7 @@
 
   // All **ECMAScript 5** native function implementations that we hope to use
   // are declared here.
+  // 所有 ECMAScript 5 原生方法实例 浏览器支持则优先使用
   var nativeIsArray = Array.isArray,
     nativeKeys = Object.keys,
     nativeBind = FuncProto.bind,
