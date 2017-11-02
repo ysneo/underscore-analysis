@@ -91,6 +91,7 @@
           return func.call(context, value, index, collection)
         }
       case 4:
+        // accumulator 累加值
         return function(accumulator, value, index, collection) {
           return func.call(context, accumulator, value, index, collection)
         }
@@ -181,6 +182,7 @@
   // should be iterated as an array or as an object
   // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
   // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
+  // 限制数组的最大长度
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1
   var getLength = property('length') // 闭包
   // 是不是类数组类型
@@ -233,32 +235,42 @@
       // currentKey keys == true ? 获取对象属性值 : 数组序号
       var currentKey = keys ? keys[index] : index
       // 出发迭代方法
+      // Object (value, key, obj)
+      // Array (item, index, obj)
       results[index] = iteratee(obj[currentKey], currentKey, obj)
     }
     return results
   }
 
   // Create a reducing function iterating left or right.
-  // dir 方向
+  // dir 方向 1, -1(from right)
   function createReduce(dir) {
     // Optimized iterator function as using arguments.length
     // in the main function will deoptimize the, see #1991.
     function iterator(obj, iteratee, memo, keys, index, length) {
       for (; index >= 0 && index < length; index += dir) {
         var currentKey = keys ? keys[index] : index
+        // (accumulator 累加值, value 值, index 键, collection 原始对象)
+        // 执行回调， 返回累加值memo
         memo = iteratee(memo, obj[currentKey], currentKey, obj)
       }
+      // 返回最终结果
       return memo
     }
 
     return function(obj, iteratee, memo, context) {
-      iteratee = optimizeCb(iteratee, context, 4)
+      iteratee = optimizeCb(iteratee, context, 4) // (accumulator, value, index, collection)
+      // _.map 相同
       var keys = !isArrayLike(obj) && _.keys(obj),
         length = (keys || obj).length,
+        // 1: 正向遍历  -1: 反向遍历
         index = dir > 0 ? 0 : length - 1
       // Determine the initial value if none is provided.
+      // 如果传入的参数 0 ~ 2 个
       if (arguments.length < 3) {
+        // memo 设置初始值，如果没有提供，则用obj第一个遍历的值
         memo = obj[keys ? keys[index] : index]
+        // 确定已遍历了一次
         index += dir
       }
       return iterator(obj, iteratee, memo, keys, index, length)
