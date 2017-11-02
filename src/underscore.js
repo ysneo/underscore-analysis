@@ -330,8 +330,10 @@
       length = (keys || obj).length
     for (var index = 0; index < length; index++) {
       var currentKey = keys ? keys[index] : index
+      // predicate 函数中只要有一个不满足条件 返回 false， 并终止循环
       if (!predicate(obj[currentKey], currentKey, obj)) return false
     }
+    // 所有条件都通过
     return true
   }
 
@@ -343,16 +345,21 @@
       length = (keys || obj).length
     for (var index = 0; index < length; index++) {
       var currentKey = keys ? keys[index] : index
+      // 满足条件 返回 true，终止循环
       if (predicate(obj[currentKey], currentKey, obj)) return true
     }
+    // 没有一个满足条件的
     return false
   }
 
   // Determine if the array or object contains a given item (using `===`).
   // Aliased as `includes` and `include`.
+  // 判断(数组或对象) obj 中是否包含给定值 item， === 全等判断
   _.contains = _.includes = _.include = function(obj, item, fromIndex, guard) {
+    // 是对象 obj 为属性值数组
     if (!isArrayLike(obj)) obj = _.values(obj)
     if (typeof fromIndex != 'number' || guard) fromIndex = 0
+    // 索引 >=0 值存在，返回 true；否则 false
     return _.indexOf(obj, item, fromIndex) >= 0
   }
 
@@ -747,25 +754,37 @@
   }
 
   // Generator function to create the indexOf and lastIndexOf functions
+  // 生成查看索引函数
   function createIndexFinder(dir, predicateFind, sortedIndex) {
     return function(array, item, idx) {
+      // FIXME: 传进来的idx永远都是数字？？
       var i = 0,
         length = getLength(array)
+      // idx 是数字 idx > length return -1;
       if (typeof idx == 'number') {
         if (dir > 0) {
+          // 重置查找的起始位置 idx可能为负值
           i = idx >= 0 ? idx : Math.max(idx + length, i)
         } else {
+          // 反向查找的时候重新定义length
           length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1
         }
       } else if (sortedIndex && idx && length) {
         idx = sortedIndex(array, item)
         return array[idx] === item ? idx : -1
       }
+      // NaN !== NaN => true
+      // 如果查找的是NaN类型
       if (item !== item) {
+        // slice.call(array, i, length) 切割需要匹配的数组
+        // 判断是否是NaN
         idx = predicateFind(slice.call(array, i, length), _.isNaN)
         return idx >= 0 ? idx + i : -1
       }
+      // 上面已经判断了NaN特殊情况
+      // 下面的判断可以用 ===
       for (idx = dir > 0 ? i : length - 1; idx >= 0 && idx < length; idx += dir) {
+        // 符合条件 则返回索引
         if (array[idx] === item) return idx
       }
       return -1
@@ -776,6 +795,7 @@
   // or -1 if the item is not included in the array.
   // If the array is large and already in sort order, pass `true`
   // for **isSorted** to use binary search.
+  // 返回第一个在数组中存在该值的索引index
   _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex)
   _.lastIndexOf = createIndexFinder(-1, _.findLastIndex)
 
@@ -1068,8 +1088,10 @@
     var length = keys.length
     var values = Array(length)
     for (var i = 0; i < length; i++) {
+      // 属性值
       values[i] = obj[keys[i]]
     }
+    // 属性值组成的新数组
     return values
   }
 
