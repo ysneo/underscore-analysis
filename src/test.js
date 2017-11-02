@@ -25,5 +25,9 @@ var names = ['Rebeka', 'Roxanne', 'Annalise', 'Devon', 'Sibyl']
 //   { other: 343 }
 // )
 // _.contains(names, 'Jack', -4)
-var sorted = [3, 43, 54, 56, 77, 88, 99]
-_.contains(sorted, 54, true)
+// var sorted = [3, 43, 54, 56, 77, 88, 99]
+// _.contains(sorted, 54, true)
+var stooges = [{ name: 'moe', age: 40 }, { name: 'larry', age: 50 }, { name: 'curly', age: 60 }]
+_.max(stooges, function(stooge) {
+  return stooge.age
+})

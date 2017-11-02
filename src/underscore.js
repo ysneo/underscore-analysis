@@ -324,6 +324,7 @@
 
   // Determine whether all of the elements match a truth test.
   // Aliased as `all`.
+  // 判断是否所有的元素都满足条件，只要又一个不满足则为false
   _.every = _.all = function(obj, predicate, context) {
     predicate = cb(predicate, context)
     var keys = !isArrayLike(obj) && _.keys(obj),
@@ -339,6 +340,7 @@
 
   // Determine if at least one element in the object matches a truth test.
   // Aliased as `any`.
+  // 至少有一个满足条件则 返回true
   _.some = _.any = function(obj, predicate, context) {
     predicate = cb(predicate, context)
     var keys = !isArrayLike(obj) && _.keys(obj),
@@ -364,7 +366,7 @@
   }
 
   // Invoke a method (with arguments) on every item in a collection.
-  //
+  // TODO:
   _.invoke = function(obj, method) {
     // method 之后的参数 args
     var args = slice.call(arguments, 2)
@@ -388,7 +390,7 @@
   // Convenience version of a common use case of `filter`: selecting only objects
   // containing specific `key:value` pairs.
   // filter 的简化版本
-  // obj(数组对象) 找到所有匹配条件的数组对象
+  // obj(数组对象) 找到所有匹配条件的数组对象， 所有相同键值对的对象
   _.where = function(obj, attrs) {
     return _.filter(obj, _.matcher(attrs))
   }
@@ -406,19 +408,26 @@
       lastComputed = -Infinity,
       value,
       computed
+    // 单纯的找出最大值
     if (iteratee == null && obj != null) {
+      // Array or Object values
       obj = isArrayLike(obj) ? obj : _.values(obj)
       for (var i = 0, length = obj.length; i < length; i++) {
+        // 当前值
         value = obj[i]
         if (value > result) {
+          // 最大值result
           result = value
         }
       }
     } else {
+      // iteratee 为排序依据
       iteratee = cb(iteratee, context)
       _.each(obj, function(value, index, list) {
+        // 返回需要比对的属性值
         computed = iteratee(value, index, list)
         if (computed > lastComputed || (computed === -Infinity && result === -Infinity)) {
+          // result 该对象
           result = value
           lastComputed = computed
         }
@@ -750,15 +759,26 @@
 
   // Use a comparator function to figure out the smallest index at which
   // an object should be inserted so as to maintain order. Uses binary search.
+  // 二进制搜索算法
   _.sortedIndex = function(array, obj, iteratee, context) {
     iteratee = cb(iteratee, context, 1)
     var value = iteratee(obj)
     var low = 0,
       high = getLength(array)
+    // 二分查找
+    // https://zh.wikipedia.org/wiki/%E4%BA%8C%E5%88%86%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95
     while (low < high) {
+      // 取中间值
       var mid = Math.floor((low + high) / 2)
-      if (iteratee(array[mid]) < value) low = mid + 1
-      else high = mid
+      // 中间值小于给定值
+      if (iteratee(array[mid]) < value) {
+        // true => 搜索范围 (mid + 1) ～ high 之间
+        low = mid + 1
+      } else {
+        // false => 范围 0 ～ mid 之间，所以 high = mid
+        // 范围每次都缩小一半
+        high = mid
+      }
     }
     return low
   }
@@ -767,7 +787,8 @@
   // 生成查看索引函数
   function createIndexFinder(dir, predicateFind, sortedIndex) {
     return function(array, item, idx) {
-      // FIXME: 传进来的idx永远都是数字？？
+      // 传进来的idx永远都是数字？？
+      // fixed: 如果单独使用_.indexOf 第三个参数 idx = true, 采用二进制搜索
       var i = 0,
         length = getLength(array)
       // idx 是数字 idx > length return -1;
