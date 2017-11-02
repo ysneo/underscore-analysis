@@ -15,3 +15,12 @@ _.reduce(
   },
   'a'
 )
+
+var findKeyValue = _.find(
+  { name: 23 },
+  function(val, key, obj) {
+    var z = this
+    return obj[key] === '89'
+  },
+  { other: 343 }
+)

@@ -285,28 +285,39 @@
   _.reduceRight = _.foldr = createReduce(-1)
 
   // Return the first value which passes a truth test. Aliased as `detect`.
+  // 返回匹配 predicate 为 true 找到的第一个值，并终止函数
   _.find = _.detect = function(obj, predicate, context) {
     var key
     if (isArrayLike(obj)) {
+      // Array
       key = _.findIndex(obj, predicate, context)
     } else {
+      // Object
       key = _.findKey(obj, predicate, context)
     }
+    // key 不等于 undefined 并且 key 不等于 -1， 则返回值
+    // 否则返回 undefined
     if (key !== void 0 && key !== -1) return obj[key]
   }
 
   // Return all the elements that pass a truth test.
   // Aliased as `select`.
+  // 过滤数组或对象 返回所有满足( predicate 为 true )的新数组
   _.filter = _.select = function(obj, predicate, context) {
     var results = []
     predicate = cb(predicate, context)
+    // 遍历
     _.each(obj, function(value, index, list) {
+      // 符合条件的存入新数组 result
       if (predicate(value, index, list)) results.push(value)
     })
+    //
     return results
   }
 
   // Return all the elements for which a truth test fails.
+  // 返回与 (predicate 返回条件)相反的新数组
+  // 相同的 callback， _.filter 返回符合条件的， _.reject (返回 _.filter 剩余的)
   _.reject = function(obj, predicate, context) {
     return _.filter(obj, _.negate(cb(predicate)), context)
   }
@@ -700,14 +711,18 @@
   }
 
   // Generator function to create the findIndex and findLastIndex functions
+  // dir = 1 正向查找； = -1 反向查找
+  // use _.findIndex , _.findLastIndex
   function createPredicateIndexFinder(dir) {
     return function(array, predicate, context) {
       predicate = cb(predicate, context)
       var length = getLength(array)
       var index = dir > 0 ? 0 : length - 1
       for (; index >= 0 && index < length; index += dir) {
+        // 执行 predicate 返回布尔值 找到匹配值后，立即返回。
         if (predicate(array[index], index, array)) return index
       }
+      // 未找到值
       return -1
     }
   }
@@ -1114,10 +1129,13 @@
   // Returns the first key on an object that passes a predicate test
   _.findKey = function(obj, predicate, context) {
     predicate = cb(predicate, context)
+    // 获取所有的键
     var keys = _.keys(obj),
       key
+    // 遍历
     for (var i = 0, length = keys.length; i < length; i++) {
       key = keys[i]
+      // 执行回调
       if (predicate(obj[key], key, obj)) return key
     }
   }
