@@ -364,8 +364,11 @@
   }
 
   // Invoke a method (with arguments) on every item in a collection.
+  //
   _.invoke = function(obj, method) {
+    // method 之后的参数 args
     var args = slice.call(arguments, 2)
+    // method 是函数吗?
     var isFunc = _.isFunction(method)
     return _.map(obj, function(value) {
       var func = isFunc ? method : value[method]
@@ -374,18 +377,25 @@
   }
 
   // Convenience version of a common use case of `map`: fetching a property.
+  // map 的简化版本
+  // 萃取`数组对象`中某属性值
   _.pluck = function(obj, key) {
+    // _.property(key) 锁定 key 值 闭包
+    // 遍历 返回指定key的属性值
     return _.map(obj, _.property(key))
   }
 
   // Convenience version of a common use case of `filter`: selecting only objects
   // containing specific `key:value` pairs.
+  // filter 的简化版本
+  // obj(数组对象) 找到所有匹配条件的数组对象
   _.where = function(obj, attrs) {
     return _.filter(obj, _.matcher(attrs))
   }
 
   // Convenience version of a common use case of `find`: getting the first object
   // containing specific `key:value` pairs.
+  // obj(数组对象) 找到第一个匹配条件的对象索引
   _.findWhere = function(obj, attrs) {
     return _.find(obj, _.matcher(attrs))
   }
@@ -1063,9 +1073,13 @@
   // Retrieve the names of an object's own properties.
   // Delegates to **ECMAScript 5**'s native `Object.keys`
   _.keys = function(obj) {
+    // 非对象 返回空数组
     if (!_.isObject(obj)) return []
+    // ES5 方法获取所有 key
     if (nativeKeys) return nativeKeys(obj)
     var keys = []
+    // 如果上面不支持
+    // 遍历对象key
     for (var key in obj) if (_.has(obj, key)) keys.push(key)
     // Ahem, IE < 9.
     if (hasEnumBug) collectNonEnumProps(obj, keys)
@@ -1227,15 +1241,20 @@
   }
 
   // Returns whether an object has a given set of `key:value` pairs.
+  // 判断是否有给定`key:value`
   _.isMatch = function(object, attrs) {
     var keys = _.keys(attrs),
       length = keys.length
     if (object == null) return !length
     var obj = Object(object)
     for (var i = 0; i < length; i++) {
+      // key 键
       var key = keys[i]
+      // 给定的 attrs 与 obj 中的不匹配
+      // 或者 key 键在 obj 中没有，则返回 false
       if (attrs[key] !== obj[key] || !(key in obj)) return false
     }
+    // 全匹配到
     return true
   }
 
@@ -1424,6 +1443,7 @@
 
   // Shortcut function for checking if an object has a given property directly
   // on itself (in other words, not on a prototype).
+  // 是否存在该属性 非原型链上的
   _.has = function(obj, key) {
     return obj != null && hasOwnProperty.call(obj, key)
   }
@@ -1465,7 +1485,9 @@
 
   // Returns a predicate for checking whether an object has a given set of
   // `key:value` pairs.
+  // 判断对象中是否有给定`键值对`
   _.matcher = _.matches = function(attrs) {
+    // 复制一个版本
     attrs = _.extendOwn({}, attrs)
     return function(obj) {
       return _.isMatch(obj, attrs)
