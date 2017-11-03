@@ -37,4 +37,6 @@ var names = ['Rebeka', 'Roxanne', 'Annalise', 'Devon', 'Sibyl']
 // _.sortBy(stooges, 'name')
 
 // console.log(_.last([5, 4, 3, 2, 1], 2))
-console.log(_.flatten([1, [2], [3, [[4]]]]))
+// console.log(_.flatten([1, [2], [3, [[4]]]]))
+// console.log(_.union([1, 2, 3], [101, [3, 4], 2, 1, 10], [2, 1]) + '')
+_.unzip([['moe', 'larry', 'curly'], [30, 40, 50], [true, false, false]])

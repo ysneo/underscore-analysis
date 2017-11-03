@@ -756,8 +756,13 @@
         // 当前值复制给 seen
         seen = computed
       } else if (iteratee) {
+        // 有回调
         if (!_.contains(seen, computed)) {
+          // 如果 seen[] 中没有 computed 这个元素值
+
+          // 更新seen
           seen.push(computed)
+          // 结果中追加一个，这个值是第一次出现
           result.push(value)
         }
       } else if (!_.contains(result, value)) {
@@ -770,21 +775,30 @@
 
   // Produce an array that contains the union: each distinct element from all of
   // the passed-in arrays.
+  // 支持多数组 不要嵌套数组 [[],[]] => No！！
   _.union = function() {
     return _.uniq(flatten(arguments, true, true))
   }
 
   // Produce an array that contains every item shared between all the
   // passed-in arrays.
+  // 返回每个数组中都存在的元素集合
   _.intersection = function(array) {
     var result = []
+    // 几个数组
     var argsLength = arguments.length
+    // 遍历第一个数组，(因为每个数组都要包含元素，可以随便遍历一个数组)
     for (var i = 0, length = getLength(array); i < length; i++) {
+      // 元素
       var item = array[i]
+      // 如果结果中包含该元素，说明之前已经对该值核对过了，跳过该循环
       if (_.contains(result, item)) continue
+      // 在剩余数组中遍历，是否有该元素
       for (var j = 1; j < argsLength; j++) {
+        // 存在则继续遍历，不存在则终止该循环
         if (!_.contains(arguments[j], item)) break
       }
+      // 上面遍历如果都为true，那么 j === argsLength => true, 公有值传给result
       if (j === argsLength) result.push(item)
     }
     return result
@@ -804,13 +818,23 @@
 
   // Zip together multiple lists into a single array -- elements that share
   // an index go together.
+  // _.zip(['moe', 'larry', 'curly'], [30, 40, 50], [true, false, false]);
+  // => [["moe", 30, true], ["larry", 40, false], ["curly", 50, false]]
+  // ===== //
+  // 将多个数组中相同位置的元素归类
+  // 返回一个数组
   _.zip = function() {
     return _.unzip(arguments)
   }
 
   // Complement of _.zip. Unzip accepts an array of arrays and groups
   // each array's elements on shared indices
+  // _.unzip([['moe', 'larry', 'curly'], [30, 40, 50], [true, false, false]])
+  // => ["moe", 30, true], ["larry", 40, false], ["curly", 50, false]
+  // 单个数组内包含多个数组
+  // 返回相同位置的元素归类
   _.unzip = function(array) {
+    // _.max 获取array中的数组长度最大的
     var length = (array && _.max(array, getLength).length) || 0
     var result = Array(length)
 
