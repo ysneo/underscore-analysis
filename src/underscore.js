@@ -381,6 +381,10 @@
   // Convenience version of a common use case of `map`: fetching a property.
   // map 的简化版本
   // 萃取`数组对象`中某属性值
+  // test:
+  // var stooges = [{name: 'moe', age: 40}, {name: 'larry', age: 50}, {name: 'curly', age: 60}];
+  // _.pluck(stooges, 'name');
+  // => ["moe", "larry", "curly"]
   _.pluck = function(obj, key) {
     // _.property(key) 锁定 key 值 闭包
     // 遍历 返回指定key的属性值
@@ -437,6 +441,7 @@
   }
 
   // Return the minimum element (or element-based computation).
+  // 同 _.max
   _.min = function(obj, iteratee, context) {
     var result = Infinity,
       lastComputed = Infinity,
@@ -465,58 +470,87 @@
 
   // Shuffle a collection, using the modern version of the
   // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
+  // 返回一个随机乱序的 list 副本
+  // 最优的洗牌算法，复杂度 O(n)
+  // test: _.shuffle([1, 2, 3, 4, 5, 6])
   _.shuffle = function(obj) {
+    // 获得数组
     var set = isArrayLike(obj) ? obj : _.values(obj)
     var length = set.length
+    // 对应长度的空数组
     var shuffled = Array(length)
     for (var index = 0, rand; index < length; index++) {
+      // 随机值
       rand = _.random(0, index)
-      if (rand !== index) shuffled[index] = shuffled[rand]
+      if (rand !== index) {
+        // 新数组按顺序得到随机数值
+        // 保证能复制 rand 永远随机到的是比 index 小的
+        shuffled[index] = shuffled[rand]
+      }
+      // 随机值赋值正序index的数组值
       shuffled[rand] = set[index]
     }
+    // 新的乱序数组
     return shuffled
   }
 
   // Sample **n** random values from a collection.
   // If **n** is not specified, returns a single random element.
   // The internal `guard` argument allows it to work with `map`.
+  // 从 list中产生一个随机样本。
+  // 传递一个数字表示从 list 中返回 n 个随机元素。
+  // 否则将返回一个单一的随机项。
   _.sample = function(obj, n, guard) {
     if (n == null || guard) {
+      // 随即返回一个元素
+      // 惯例: 如果参数是对象，则数组由 values 组成
       if (!isArrayLike(obj)) obj = _.values(obj)
       return obj[_.random(obj.length - 1)]
     }
+    // 乱序后 返回 n 个
     return _.shuffle(obj).slice(0, Math.max(0, n))
   }
 
   // Sort the object's values by a criterion produced by an iteratee.
   _.sortBy = function(obj, iteratee, context) {
+    // iteratee
     iteratee = cb(iteratee, context)
     return _.pluck(
       _.map(obj, function(value, index, list) {
         return {
           value: value,
           index: index,
+          // 回调结果，排序规则
           criteria: iteratee(value, index, list)
         }
       }).sort(function(left, right) {
+        // Array.prototype.sort
         var a = left.criteria
         var b = right.criteria
         if (a !== b) {
           if (a > b || a === void 0) return 1
           if (a < b || b === void 0) return -1
         }
+        // 值相等 则对比索引值
         return left.index - right.index
       }),
+      // map 中定义了 value 属性，存储了原对象
+      // pluck 提取对应value属性 返回新数组
       'value'
     )
   }
 
   // An internal function used for aggregate "group by" operations.
+  // 闭包
+  // 分类规则就是 behavior 函数
   var group = function(behavior) {
     return function(obj, iteratee, context) {
+      // 返回对象
       var result = {}
       iteratee = cb(iteratee, context)
+      // 遍历
       _.each(obj, function(value, index) {
+        // key 回调结果
         var key = iteratee(value, index, obj)
         behavior(result, value, key)
       })
@@ -526,13 +560,20 @@
 
   // Groups the object's values by a criterion. Pass either a string attribute
   // to group by, or a function that returns the criterion.
+  // result 返回的结果对象
+  // value 数组元素
+  // key 回调后的值
   _.groupBy = group(function(result, value, key) {
+    // 新对象中有该key属性吗
+    // true => 将value追加进去
+    // false => 新建key属性，属性值为数组
     if (_.has(result, key)) result[key].push(value)
     else result[key] = [value]
   })
 
   // Indexes the object's values by a criterion, similar to `groupBy`, but for
   // when you know that your index values will be unique.
+  // key 唯一，不然会覆盖前面的属性
   _.indexBy = group(function(result, value, key) {
     result[key] = value
   })
@@ -540,43 +581,58 @@
   // Counts instances of an object that group by a certain criterion. Pass
   // either a string attribute to count by, or a function that returns the
   // criterion.
+  // 计数：计算满足规则的 回调key
   _.countBy = group(function(result, value, key) {
     if (_.has(result, key)) result[key]++
     else result[key] = 1
   })
 
   // Safely create a real, live array from anything iterable.
+  // 把list(任何可以迭代的对象)转换成一个数组，在转换 arguments 对象时非常有用。
+  // 对数组而言不是深拷贝
   _.toArray = function(obj) {
     if (!obj) return []
     if (_.isArray(obj)) return slice.call(obj)
+    // 各个元素返回本身， 新数组
     if (isArrayLike(obj)) return _.map(obj, _.identity)
+    // 对象则返回values集合
     return _.values(obj)
   }
 
   // Return the number of elements in an object.
+  // 返回数组或对象的长度，获取对象长度时有用
   _.size = function(obj) {
     if (obj == null) return 0
+    // 如果是对象，获取所有key键的长度
     return isArrayLike(obj) ? obj.length : _.keys(obj).length
   }
 
   // Split a collection into two arrays: one whose elements all satisfy the given
   // predicate, and one whose elements all do not satisfy the predicate.
+  // 分离list集合为两个数组
+  // 一个是满足规则的数组，另一个是不满足规则的数组
+  // 像 [[true Array], [false Array]]
   _.partition = function(obj, predicate, context) {
     predicate = cb(predicate, context)
     var pass = [],
       fail = []
     _.each(obj, function(value, key, obj) {
+      // predicate(value, key, obj) 是否满足条件？？？
       ;(predicate(value, key, obj) ? pass : fail).push(value)
     })
     return [pass, fail]
   }
 
   // Array Functions
+  // 数组方法
   // ---------------
 
   // Get the first element of an array. Passing **n** will return the first N
   // values in the array. Aliased as `head` and `take`. The **guard** check
   // allows it to work with `_.map`.
+  // 返回数组第一个元素
+  // n 存在则返回前 n 个元素
+  // _.first([5, 4, 3, 2, 1], 2); => [5, 4]
   _.first = _.head = _.take = function(array, n, guard) {
     if (array == null) return void 0
     if (n == null || guard) return array[0]
@@ -586,12 +642,16 @@
   // Returns everything but the last entry of the array. Especially useful on
   // the arguments object. Passing **n** will return all the values in
   // the array, excluding the last N.
+  // 传入 n 后返回 n 个元素组成的数组
+  // 但不包括 索引 n 的元素
   _.initial = function(array, n, guard) {
     return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)))
   }
 
   // Get the last element of an array. Passing **n** will return the last N
   // values in the array.
+  // 返回数组最后一个数
+  // 如果 n 存在， 返回最后 n 个数
   _.last = function(array, n, guard) {
     if (array == null) return void 0
     if (n == null || guard) return array[array.length - 1]
@@ -601,24 +661,41 @@
   // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.
   // Especially useful on the arguments object. Passing an **n** will return
   // the rest N values in the array.
+  // 返回 n 索引开始到最后的所有元素
   _.rest = _.tail = _.drop = function(array, n, guard) {
     return slice.call(array, n == null || guard ? 1 : n)
   }
 
   // Trim out all falsy values from an array.
+  // 过滤所有 假值
+  // JavaScript 中的假值包括 false、null、undefined、''、NaN、0
   _.compact = function(array) {
     return _.filter(array, _.identity)
   }
 
   // Internal implementation of a recursive `flatten` function.
+  // 递归函数
+  // 将一个嵌套多层的数组 array（数组） (嵌套可以是任何层数)转换为只有一层的数组。
+  // 如果你传递 shallow参数，数组将只减少一维的嵌套
+  // shallow false => 深度展开； true => 只展开一层
+  // startIndex 从哪个索引开始遍历
   var flatten = function(input, shallow, strict, startIndex) {
+    // output 输出数组， idx 索引
     var output = [],
       idx = 0
+    // 遍历
     for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
+      // 多重数组中的当前值
       var value = input[i]
+      // 如果遍历到的值还是数组形式
       if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
         //flatten current level of array or arguments object
+
+        // !shallow =>  true 继续递归遍历，把元素从每个嵌套数组中抽离出来
+        // 返回数组 flatten 总是返回数组
         if (!shallow) value = flatten(value, shallow, strict)
+
+        // 再遍历赋值到结果数组上
         var j = 0,
           len = value.length
         output.length += len
@@ -633,19 +710,32 @@
   }
 
   // Flatten out an array, either recursively (by default), or just one level.
+  // 将嵌套的数组展开
+  // 如果参数 (shallow === true)，则仅展开一层
+  // _.flatten([1, [2], [3, [[4]]]]);
+  // => [1, 2, 3, 4];
+  // ====== //
+  // _.flatten([1, [2], [3, [[4]]]], true);
+  // => [1, 2, 3, [[4]]];
   _.flatten = function(array, shallow) {
     return flatten(array, shallow, false)
   }
 
   // Return a version of the array that does not contain the specified value(s).
+  // 返回不包含指定值(可多个)的数组
   _.without = function(array) {
+    // 找不同
     return _.difference(array, slice.call(arguments, 1))
   }
 
   // Produce a duplicate-free version of the array. If the array has already
   // been sorted, you have the option of using a faster algorithm.
   // Aliased as `unique`.
+  // 返回 array去重后的副本, 使用 === 做相等测试.
+  // 如果您确定 array 已经排序, 那么给 isSorted 参数传递 true值, 此函数将运行的更快的算法.
+  // 如果要处理对象元素, 传递 iteratee函数来获取要对比的属性.
   _.uniq = _.unique = function(array, isSorted, iteratee, context) {
+    // isSorted 传的是非布尔值 如 undefined, function ...
     if (!_.isBoolean(isSorted)) {
       context = iteratee
       iteratee = isSorted
@@ -656,9 +746,14 @@
     var seen = []
     for (var i = 0, length = getLength(array); i < length; i++) {
       var value = array[i],
+        // computed 回调后的值
         computed = iteratee ? iteratee(value, i, array) : value
       if (isSorted) {
+        // 数组是排序好的，有序数组只要看相邻有没有重复的值
+        // i === 0 第一个元素直接push
+        // 或者 之前的值和当前值做比较 不相等的话 push
         if (!i || seen !== computed) result.push(value)
+        // 当前值复制给 seen
         seen = computed
       } else if (iteratee) {
         if (!_.contains(seen, computed)) {
@@ -666,6 +761,7 @@
           result.push(value)
         }
       } else if (!_.contains(result, value)) {
+        // result 中有value吗？ 没有则push
         result.push(value)
       }
     }
@@ -696,8 +792,11 @@
 
   // Take the difference between one array and a number of other arrays.
   // Only the elements present in just the first array will remain.
+  // array 可多数组
   _.difference = function(array) {
+    // arguments[0] === array 没有参与递归，将剩余的展开一层合并为 rest
     var rest = flatten(arguments, true, true, 1)
+    // 保留在rest中没有的元素
     return _.filter(array, function(value) {
       return !_.contains(rest, value)
     })
@@ -1480,6 +1579,7 @@
   }
 
   // Keep the identity function around for default iteratees.
+  // 设置默认的回调
   _.identity = function(value) {
     return value
   }
@@ -1524,6 +1624,7 @@
   }
 
   // Return a random integer between min and max (inclusive).
+  // 获取两数之间的随机数
   _.random = function(min, max) {
     if (max == null) {
       max = min
