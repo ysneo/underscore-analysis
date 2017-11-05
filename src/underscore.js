@@ -1116,29 +1116,46 @@
   // as much as it can, without ever going more than once per `wait` duration;
   // but if you'd like to disable the execution on the leading edge, pass
   // `{leading: false}`. To disable execution on the trailing edge, ditto.
+  // 如果你想禁用第一次首先执行的话，传递{leading: false}，
+  // 还有如果你想禁用最后一次执行的话，传递{trailing: false } 。
   _.throttle = function(func, wait, options) {
     var context, args, result
+    // 定时器返回值 timer
     var timeout = null
+    // 记录上一个时间戳
     var previous = 0
+    // 初始选项
     if (!options) options = {}
     var later = function() {
+      // 延迟执行函数
       previous = options.leading === false ? 0 : _.now()
       timeout = null
       result = func.apply(context, args)
       if (!timeout) context = args = null
     }
+
+    // 返回一个方法
     return function() {
+      // 此次执行的时候记录一次时间
       var now = _.now()
       if (!previous && options.leading === false) previous = now
+      // (now - previous) 两次的间隔时间
       var remaining = wait - (now - previous)
+      // this 指向
       context = this
+      // func 的参数
       args = arguments
+      // 1, 两次执行的时间间隔大于等于延迟时间、
       if (remaining <= 0 || remaining > wait) {
+        // 定时器存在 ，清除
         if (timeout) {
           clearTimeout(timeout)
           timeout = null
         }
+
+        // 重置前一次的时间戳
         previous = now
+
         result = func.apply(context, args)
         if (!timeout) context = args = null
       } else if (!timeout && options.trailing !== false) {
