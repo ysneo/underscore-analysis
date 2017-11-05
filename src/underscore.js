@@ -822,7 +822,7 @@
   // => [["moe", 30, true], ["larry", 40, false], ["curly", 50, false]]
   // ===== //
   // 将多个数组中相同位置的元素归类
-  // 返回一个数组
+  // 返回一个数组, 将多数组压缩到一个数组中，并将给数组中索引相同的元素归类
   _.zip = function() {
     return _.unzip(arguments)
   }
@@ -830,7 +830,7 @@
   // Complement of _.zip. Unzip accepts an array of arrays and groups
   // each array's elements on shared indices
   // _.unzip([['moe', 'larry', 'curly'], [30, 40, 50], [true, false, false]])
-  // => ["moe", 30, true], ["larry", 40, false], ["curly", 50, false]
+  // => [["moe", 30, true], ["larry", 40, false], ["curly", 50, false]]
   // 单个数组内包含多个数组
   // 返回相同位置的元素归类
   _.unzip = function(array) {
@@ -839,6 +839,7 @@
     var result = Array(length)
 
     for (var index = 0; index < length; index++) {
+      // _.pluck() 找到相同索引的元素
       result[index] = _.pluck(array, index)
     }
     return result
@@ -847,12 +848,17 @@
   // Converts lists into objects. Pass either a single array of `[key, value]`
   // pairs, or two parallel arrays of the same length -- one of keys, and one of
   // the corresponding values.
+  // 数组转化为对象
   _.object = function(list, values) {
+    // 结果对象
     var result = {}
+    // 遍历
     for (var i = 0, length = getLength(list); i < length; i++) {
       if (values) {
+        // 第二个参数存在，list 提供类 key，而 values 对应了 key
         result[list[i]] = values[i]
       } else {
+        // 第二个参数没有， list 的每个数组有 [key, value] 组成
         result[list[i][0]] = list[i][1]
       }
     }
@@ -882,7 +888,7 @@
 
   // Use a comparator function to figure out the smallest index at which
   // an object should be inserted so as to maintain order. Uses binary search.
-  // 二进制搜索算法
+  // 二进制搜索算法 二分法
   _.sortedIndex = function(array, obj, iteratee, context) {
     iteratee = cb(iteratee, context, 1)
     var value = iteratee(obj)
@@ -958,14 +964,16 @@
   // [the Python documentation](http://docs.python.org/library/functions.html#range).
   _.range = function(start, stop, step) {
     if (stop == null) {
+      // 只传了一个参数 _.range(0, start)
       stop = start || 0
       start = 0
     }
+    // step默认值为 1
     step = step || 1
-
+    // 设置返回数组的长度
     var length = Math.max(Math.ceil((stop - start) / step), 0)
     var range = Array(length)
-
+    // 遍历并 更新 start 值
     for (var idx = 0; idx < length; idx++, start += step) {
       range[idx] = start
     }
@@ -975,12 +983,21 @@
 
   // Function (ahem) Functions
   // ------------------
+  // 函数方法
 
   // Determines whether to execute a function as a constructor
   // or a normal function with the provided arguments
   var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
+    // callingContext 不是 boundFunc 的实例，直接执行给定函数
     if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args)
+
+    // callingContext 是 boundFunc的实例， new 调用 _.bind
+    // 创建一个新的原型对象
     var self = baseCreate(sourceFunc.prototype)
+    // 正常情况下是没有返回值的，即 result 值为 undefined
+    // 如果构造函数有返回值
+    // 如果返回值是对象（非 null），则 new 的结果返回这个对象
+    // 否则返回实例
     var result = sourceFunc.apply(self, args)
     if (_.isObject(result)) return result
     return self
@@ -990,11 +1007,19 @@
   // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
   // available.
   _.bind = function(func, context) {
+    // 如果支持原生的方法，并且 func 上的 bind 没有被重写
     if (nativeBind && func.bind === nativeBind)
+      // 优先使用原生方法
       return nativeBind.apply(func, slice.call(arguments, 1))
+
+    // func是函数吗？ 不是则抛出错误
     if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function')
+
+    // poly fill
+    // context 之后的所有参数集合 args
     var args = slice.call(arguments, 2)
     var bound = function() {
+      // args.concat(slice.call(arguments))， 合并 bound 的参数
       return executeBound(func, bound, context, this, args.concat(slice.call(arguments)))
     }
     return bound
@@ -1004,14 +1029,20 @@
   // arguments pre-filled, without changing its dynamic `this` context. _ acts
   // as a placeholder, allowing any combination of arguments to be pre-filled.
   _.partial = function(func) {
+    // func 的参数
     var boundArgs = slice.call(arguments, 1)
     var bound = function() {
       var position = 0,
         length = boundArgs.length
       var args = Array(length)
+      // 遍历第一次传参的可用参数 _.partial
+      // boundArgs 是 _.partial 的参数
+      // arguments 是 bound 函数的参数
       for (var i = 0; i < length; i++) {
+        // 如果参数是 _ ，用 bound 的参数去代替
         args[i] = boundArgs[i] === _ ? arguments[position++] : boundArgs[i]
       }
+      // 遍历 bound 可用的参数，把剩余的参数添加进去。
       while (position < arguments.length) args.push(arguments[position++])
       return executeBound(func, bound, this, this, args)
     }
@@ -1021,23 +1052,38 @@
   // Bind a number of an object's methods to that object. Remaining arguments
   // are the method names to be bound. Useful for ensuring that all callbacks
   // defined on an object belong to it.
+  // 把对象的方法绑定到该对象上，特别是this的指向
+  // 硬指向该对象上
   _.bindAll = function(obj) {
     var i,
       length = arguments.length,
       key
+    // 方法名必须传入 args = slice.call(arguments, 1)
     if (length <= 1) throw new Error('bindAll must be passed function names')
+    // 遍历obj之后的参数（对象的属性名，需要绑定this的方法）
     for (i = 1; i < length; i++) {
       key = arguments[i]
+      // 绑定 _.bind
       obj[key] = _.bind(obj[key], obj)
     }
     return obj
   }
 
   // Memoize an expensive function by storing its results.
+  // Memoizes方法可以缓存某函数的计算结果。对于耗时较长的计算是很有帮助的。
+  // 如果传递了 hashFunction 参数，就用 hashFunction 的返回值作为key存储函数的计算结果。
+  // hashFunction 默认使用function的第一个参数作为key。memoized值的缓存 可作为 返回函数的cache属性。
+  // 对于复杂计算的方法，允许缓存结果
+  // 缓存结果的辨识参数
+  // 如果有传入 hasher， hasher为函数计算出cache 属性， 缓存该结果
+  // 如果没有传 hasher， 则用key（为函数的第一个参数）
   _.memoize = function(func, hasher) {
     var memoize = function(key) {
+      // 是否有缓存
       var cache = memoize.cache
+      // 通过hasher计算属性，否则用函数第一个参数
       var address = '' + (hasher ? hasher.apply(this, arguments) : key)
+      // 是否有缓存结果
       if (!_.has(cache, address)) cache[address] = func.apply(this, arguments)
       return cache[address]
     }
@@ -1047,15 +1093,22 @@
 
   // Delays a function for the given number of milliseconds, and then calls
   // it with the arguments supplied.
+  // setTimeout的封装
+  // 缺陷：没有对 func 的this指向做特殊处理
   _.delay = function(func, wait) {
+    // func 的参数
     var args = slice.call(arguments, 2)
     return setTimeout(function() {
+      // 触发回调 注意：this => null
       return func.apply(null, args)
     }, wait)
   }
 
   // Defers a function, scheduling it to run after the current call stack has
   // cleared.
+  // setTimeout(func, 1)
+  // 默认值 _, 执行_.defer(func, *arguments),
+  // _ 替换为 func， *arguments 为 func 的参数
   _.defer = _.partial(_.delay, _, 1)
 
   // Returns a function, that, when invoked, will only be triggered at most once
