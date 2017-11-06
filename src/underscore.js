@@ -1145,7 +1145,9 @@
       context = this
       // func 的参数
       args = arguments
-      // 1, 两次执行的时间间隔大于等于延迟时间、
+
+      // 1, 两次执行的时间间隔大于等于延迟时间
+      // 2, remaining 大于时间窗口 wait，表示客户端系统时间被调整过
       if (remaining <= 0 || remaining > wait) {
         // 定时器存在 ，清除
         if (timeout) {
@@ -1158,6 +1160,8 @@
 
         result = func.apply(context, args)
         if (!timeout) context = args = null
+        // 两次执行的时间间隔小于延迟时间
+        // 等待上一个计时器完成
       } else if (!timeout && options.trailing !== false) {
         timeout = setTimeout(later, remaining)
       }
@@ -1169,17 +1173,23 @@
   // be triggered. The function will be called after it stops being called for
   // N milliseconds. If `immediate` is passed, trigger the function on the
   // leading edge, instead of the trailing.
+  // 返回一个函数
+  // immediate = true  debounce会在 wait 时间间隔的开始调用这个函数
   _.debounce = function(func, wait, immediate) {
     var timeout, args, context, timestamp, result
 
     var later = function() {
       var last = _.now() - timestamp
 
+      // 两次触发时间间隔小于给(定时间窗口 wait)
+      // last >= 0 确保 _.now() 系统时间没被改动。
       if (last < wait && last >= 0) {
         timeout = setTimeout(later, wait - last)
       } else {
+        // 到了触发的点了
         timeout = null
         if (!immediate) {
+          // 执行 func
           result = func.apply(context, args)
           if (!timeout) context = args = null
         }
@@ -1190,9 +1200,12 @@
       context = this
       args = arguments
       timestamp = _.now()
+      // 立即执行并且定时不存在，那么立刻调用
       var callNow = immediate && !timeout
+      // 设置定时器
       if (!timeout) timeout = setTimeout(later, wait)
       if (callNow) {
+        // 立刻调用
         result = func.apply(context, args)
         context = args = null
       }
@@ -1204,11 +1217,21 @@
   // Returns the first function passed as an argument to the second,
   // allowing you to adjust arguments, run code before and after, and
   // conditionally execute the original function.
+  /**
+   *  func 作为 wrapper 的第一个参数调用
+   * 
+   * @param {function} func 
+   * @param {function} wrapper 
+   * @returns wrapper 的返回值
+   */
   _.wrap = function(func, wrapper) {
     return _.partial(wrapper, func)
   }
 
-  // Returns a negated version of the passed-in predicate.
+  /** 
+   * @param {function} predicate 
+   * @returns 用户调用函数（返回 predicate 结果的相反值）
+   */
   _.negate = function(predicate) {
     return function() {
       return !predicate.apply(this, arguments)
@@ -1218,17 +1241,23 @@
   // Returns a function that is the composition of a list of functions, each
   // consuming the return value of the function that follows.
   _.compose = function() {
+    // args 函数集合
     var args = arguments
+    // 开始索引，最后一个函数
     var start = args.length - 1
     return function() {
       var i = start
+      // 执行最后一个函数并返回结果 result
       var result = args[start].apply(this, arguments)
+      // 从后往前依次执行函数，上一个函数返回的结果是下一个函数执行时的参数
       while (i--) result = args[i].call(this, result)
+      // 返回最终结果
       return result
     }
   }
 
   // Returns a function that will only be executed on and after the Nth call.
+  // 运行 times 次后才才执行 func，对异步调用的时候适用
   _.after = function(times, func) {
     return function() {
       if (--times < 1) {
@@ -1238,6 +1267,13 @@
   }
 
   // Returns a function that will only be executed up to (but not including) the Nth call.
+  /**
+   * 调用不超过 times 次数（不包含times次）
+   * @param {number} times 
+   * @param {function} func 
+   * @returns func 的返回值
+   * 调用次数>=times 后返回的结果是（times - 1）的结果
+   */
   _.before = function(times, func) {
     var memo
     return function() {
@@ -1251,10 +1287,12 @@
 
   // Returns a function that will be executed at most one time, no matter how
   // often you call it. Useful for lazy initialization.
+  // 创建一个只调用一次的函数
   _.once = _.partial(_.before, 2)
 
   // Object Functions
   // ----------------
+  // 对象方法
 
   // Keys in IE < 9 that won't be iterated by `for key in ...` and thus missed.
   var hasEnumBug = !{ toString: null }.propertyIsEnumerable('toString')
@@ -1325,6 +1363,7 @@
 
   // Returns the results of applying the iteratee to each element of the object
   // In contrast to _.map it returns an object
+  // 对对象中的每个属性进行迭代，返回新对象
   _.mapObject = function(obj, iteratee, context) {
     iteratee = cb(iteratee, context)
     var keys = _.keys(obj),
@@ -1339,6 +1378,7 @@
   }
 
   // Convert an object into a list of `[key, value]` pairs.
+  // 配对，返回 [[key, value], [key, value]]
   _.pairs = function(obj) {
     var keys = _.keys(obj)
     var length = keys.length
@@ -1350,6 +1390,7 @@
   }
 
   // Invert the keys and values of an object. The values must be serializable.
+  // 颠倒 属性 和 属性值，确保属性值唯一且可以换成字符串形式， 返回新对象
   _.invert = function(obj) {
     var result = {}
     var keys = _.keys(obj)
@@ -1361,6 +1402,7 @@
 
   // Return a sorted list of the function names available on the object.
   // Aliased as `methods`
+  // 找出对象中属性值是方法的属性，合并成一个数组并排序
   _.functions = _.methods = function(obj) {
     var names = []
     for (var key in obj) {
@@ -1370,6 +1412,8 @@
   }
 
   // Extend a given object with all the properties in passed-in object(s).
+  // 复制 source 对象中的所有属性覆盖到 destination 对象上，并且返回 destination 对象.
+  // 复制是按顺序的, 所以后面的对象属性会把前面的对象属性覆盖掉(如果有重复).
   _.extend = createAssigner(_.allKeys)
 
   // Assigns a given object with all the own properties in the passed-in object(s)

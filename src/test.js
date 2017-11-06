@@ -7,7 +7,7 @@ var _ = require('./underscore')
 // _(['a', 3]).each(log)
 // _.extend({ name: 'moe' }, { age: 50 })
 
-var names = ['Rebeka', 'Roxanne', 'Annalise', 'Devon', 'Sibyl']
+// var names = ['Rebeka', 'Roxanne', 'Annalise', 'Devon', 'Sibyl']
 // _.reduce(
 //   names,
 //   function(memo, value, index, arr) {
@@ -57,19 +57,42 @@ var names = ['Rebeka', 'Roxanne', 'Annalise', 'Devon', 'Sibyl']
 // })
 // fibonacci(4)
 
-var store = {
-  nextId: 1,
-  cache: {},
-  add: function(fn) {
-    if (!fn.id) {
-      fn.id = this.nextId++
-      return !!(this.cache[fn.id] = fn)
-    }
-  }
-}
-function ninja() {}
+// var store = {
+//   nextId: 1,
+//   cache: {},
+//   add: function(fn) {
+//     if (!fn.id) {
+//       fn.id = this.nextId++
+//       return !!(this.cache[fn.id] = fn)
+//     }
+//   }
+// }
+// function ninja() {}
 // console.log(store.add(ninja), 1)
 // console.log(store.add(ninja), 2)
-_.delay(function() {
-  console.log(1)
-}, 1000)
+// _.delay(function() {
+//   console.log(1)
+// }, 1000)
+// var count = 0
+// var doCount = _.before(3, function() {
+//   return ++count
+// })
+// console.log(doCount())
+// console.log(doCount())
+// console.log(doCount())
+// console.log(doCount())
+var count = 0
+console.log(_.now())
+var deb = _.debounce(
+  function() {
+    console.log(++count)
+    console.log(_.now())
+  },
+  2000,
+  false
+)
+deb()
+deb()
+deb()
+deb()
+deb()
