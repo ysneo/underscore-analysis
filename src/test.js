@@ -81,18 +81,23 @@ var _ = require('./underscore')
 // console.log(doCount())
 // console.log(doCount())
 // console.log(doCount())
-var count = 0
-console.log(_.now())
-var deb = _.debounce(
-  function() {
-    console.log(++count)
-    console.log(_.now())
-  },
-  2000,
-  false
-)
-deb()
-deb()
-deb()
-deb()
-deb()
+// var count = 0
+// console.log(_.now())
+// var deb = _.debounce(
+//   function() {
+//     console.log(++count)
+//     console.log(_.now())
+//   },
+//   2000,
+//   false
+// )
+// deb()
+// deb()
+// deb()
+// deb()
+// deb()
+// console.log(NaN !== NaN)
+// console.log(isNaN(NaN))
+// console.log(isFinite(NaN))
+
+console.log(_.isObject(undefined))

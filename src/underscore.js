@@ -1516,13 +1516,14 @@
   // The primary purpose of this method is to "tap into" a method chain, in
   // order to perform operations on intermediate results within the chain.
   // 链式操作中， interceptor 操作对象，并返回对象本身
+  // 操作对象并返回对象本身，链式操作有用
   _.tap = function(obj, interceptor) {
     interceptor(obj)
     return obj
   }
 
   // Returns whether an object has a given set of `key:value` pairs.
-  // 判断是否有给定`key:value`
+  // 判断是否有给定`key:value`， 判断是否有给定的属性和属性值
   _.isMatch = function(object, attrs) {
     var keys = _.keys(attrs),
       length = keys.length
@@ -1552,6 +1553,7 @@
     if (b instanceof _) b = b._wrapped
     // Compare `[[Class]]` names.
     var className = toString.call(a)
+    // 两者类型不同，返回 false
     if (className !== toString.call(b)) return false
     switch (className) {
       // Strings, numbers, regular expressions, dates, and booleans are compared by value.
@@ -1560,10 +1562,13 @@
       case '[object String]':
         // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
         // equivalent to `new String("5")`.
+
+        // 这个全等式 是 RegExp 和 String 一起的， 通过转化成字符串进行比较。
         return '' + a === '' + b
       case '[object Number]':
         // `NaN`s are equivalent, but non-reflexive.
         // Object(NaN) is equivalent to NaN
+        // +a !== +a, true => a 是 NaN，再比较 b 是不是 NaN， false =>
         if (+a !== +a) return +b !== +b
         // An `egal` comparison is performed for other numeric values.
         return +a === 0 ? 1 / +a === 1 / b : +a === +b
@@ -1572,11 +1577,15 @@
         // Coerce dates and booleans to numeric primitive values. Dates are compared by their
         // millisecond representations. Note that invalid dates with millisecond representations
         // of `NaN` are not equivalent.
+        // 是时间 或 布尔值 就转为数字进行全等比较
+        // NaN !== NaN
         return +a === +b
     }
 
     var areArrays = className === '[object Array]'
+    // 是数组吗？
     if (!areArrays) {
+      // a 不是对象或 b 不是对象，返回 false
       if (typeof a != 'object' || typeof b != 'object') return false
 
       // Objects with different constructors are not equivalent, but `Object`s or `Array`s
@@ -1618,21 +1627,29 @@
     if (areArrays) {
       // Compare array lengths to determine if a deep comparison is necessary.
       length = a.length
+      // 两个数组长度比较，如果不等，就返回 false
       if (length !== b.length) return false
       // Deep compare the contents, ignoring non-numeric properties.
+      // 遍历
       while (length--) {
+        // 对 a和b 中的每一项重新比对是否相等， 如有一项不等，返回false， 递归
         if (!eq(a[length], b[length], aStack, bStack)) return false
       }
     } else {
       // Deep compare objects.
+      // 比较对象
+      // 获取对象的key
       var keys = _.keys(a),
         key
       length = keys.length
       // Ensure that both objects contain the same number of properties before comparing deep equality.
+      // 确保两个对象的key的长度相等，才能继续比较
       if (_.keys(b).length !== length) return false
+      // 遍历
       while (length--) {
         // Deep compare each member
         key = keys[length]
+        // b 中是否也有该key， 则对两个属性值继续递归比较
         if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack))) return false
       }
     }
@@ -1643,7 +1660,7 @@
   }
 
   // Perform a deep comparison to check if two objects are equal.
-  // 深度检测两个对象是否相等
+  // 深度检测两个对象是否相等, 和引用地址无关
   _.isEqual = function(a, b) {
     return eq(a, b)
   }
@@ -1651,19 +1668,24 @@
   // Is a given array, string, or object empty?
   // An "empty" object has no enumerable own-properties.
   _.isEmpty = function(obj) {
+    // null 和 undefined 为空
     if (obj == null) return true
+    // 类数组、 数组、 字符串、 arguments
     if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj)))
       return obj.length === 0
+    // 对象取得所有 [key...]
     return _.keys(obj).length === 0
   }
 
   // Is a given value a DOM element?
+  // 是否是元素节点
   _.isElement = function(obj) {
     return !!(obj && obj.nodeType === 1)
   }
 
   // Is a given value an array?
   // Delegates to ECMA5's native Array.isArray
+  // 是否是数组， 用原生方法去判断， 或者 toString 方法 得到 [object, Array]
   _.isArray =
     nativeIsArray ||
     function(obj) {
@@ -1671,8 +1693,10 @@
     }
 
   // Is a given variable an object?
+  // 是否是对象
   _.isObject = function(obj) {
     var type = typeof obj
+    // 函数也是对象， 这里把 null 的情况剔除
     return type === 'function' || (type === 'object' && !!obj)
   }
 
@@ -1700,26 +1724,31 @@
   }
 
   // Is a given object a finite number?
+  // 是否是有限的值
   _.isFinite = function(obj) {
     return isFinite(obj) && !isNaN(parseFloat(obj))
   }
 
   // Is the given value `NaN`? (NaN is the only number which does not equal itself).
+  // 是否是 NaN, NaN 是数字， 但是他不等于本身
   _.isNaN = function(obj) {
     return _.isNumber(obj) && obj !== +obj
   }
 
   // Is a given value a boolean?
+  // 是否是布尔值
   _.isBoolean = function(obj) {
     return obj === true || obj === false || toString.call(obj) === '[object Boolean]'
   }
 
   // Is a given value equal to null?
+  // 是否是 null
   _.isNull = function(obj) {
     return obj === null
   }
 
   // Is a given variable undefined?
+  // 是否是 undefined
   _.isUndefined = function(obj) {
     return obj === void 0
   }
@@ -1733,6 +1762,7 @@
 
   // Utility Functions
   // -----------------
+  // 工具类方法
 
   // Run Underscore.js in *noConflict* mode, returning the `_` variable to its
   // previous owner. Returns a reference to the Underscore object.
@@ -1748,6 +1778,7 @@
   }
 
   // Predicate-generating functions. Often useful outside of Underscore.
+  // 预定义的 function
   _.constant = function(value) {
     return function() {
       return value
@@ -1780,9 +1811,12 @@
 
   // Run a function **n** times.
   _.times = function(n, iteratee, context) {
+    // 给定长度的数组
     var accum = Array(Math.max(0, n))
     iteratee = optimizeCb(iteratee, context, 1)
+    // 执行 n 次函数，并把结果返回给 accum， 每次的序号传给函数作参数
     for (var i = 0; i < n; i++) accum[i] = iteratee(i)
+    // 返回结果数组
     return accum
   }
 
@@ -1797,6 +1831,7 @@
   }
 
   // A (possibly faster) way to get the current timestamp as an integer.
+  // 当前时间毫秒数
   _.now =
     Date.now ||
     function() {
